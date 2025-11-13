@@ -9,6 +9,8 @@ from PIL import Image, ImageOps
 from tensorflow.keras.layers import DepthwiseConv2D as KDepthwiseConv2D
 import os
 import logging
+import random
+import time
 
 # ================== PAGE CONFIGURATION ==================
 st.set_page_config(page_title="AGRISCAN – Crop Disease Detection", layout="centered")
@@ -81,6 +83,34 @@ def preprocess_image(img):
     img_array = np.asarray(img).astype(np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
+
+# ================== ANIMATED PREDICTION REVEAL ==================
+def show_animated_prediction(predicted_class, confidence, class_names):
+    """Show animated prediction reveal with random disease names cycling."""
+    st.write("🔍 Analyzing...")
+    
+    # Get random disease names for animation (excluding the actual prediction)
+    other_diseases = [name for name in class_names if name != predicted_class]
+    random.shuffle(other_diseases)
+    
+    # Create placeholder for animated reveal
+    placeholder = st.empty()
+    
+    # Animate through random predictions
+    animation_steps = 8
+    for step in range(animation_steps):
+        random_disease = random.choice(other_diseases)
+        with placeholder.container():
+            st.success(f"**Prediction:** {random_disease}")
+            st.info(f"**Confidence:** {random.randint(20, 95):.2f}%")
+        time.sleep(0.3)
+    
+    # Reveal the actual prediction
+    with placeholder.container():
+        st.success(f"**Prediction:** {predicted_class}")
+        st.info(f"**Confidence:** {confidence:.2f}%")
+    
+    return predicted_class
 
 # ================== DISEASE INFORMATION & SUGGESTIONS ==================
 disease_info = {
@@ -196,18 +226,15 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
     
     if model_available:
-        st.write("🔍 Analyzing...")
-        
         img_array = preprocess_image(image)
-        predictions = model.predict(img_array)
+        predictions = model.predict(img_array, verbose=0)
         score = tf.nn.softmax(predictions[0])
 
         predicted_class = class_names[np.argmax(score)]
         confidence = 100 * np.max(score)
 
-        # Display prediction
-        st.success(f"**Prediction:** {predicted_class}")
-        st.info(f"**Confidence:** {confidence:.2f}%")
+        # Show animated prediction reveal
+        show_animated_prediction(predicted_class, confidence, class_names)
 
         # Display additional info if available
         if predicted_class in disease_info:
