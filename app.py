@@ -87,7 +87,6 @@ def preprocess_image(img):
 # ================== ANIMATED PREDICTION REVEAL ==================
 def show_animated_prediction(predicted_class, confidence, class_names):
     """Show animated prediction reveal with random disease names cycling."""
-    st.write("🔍 Analyzing...")
     
     # Get random disease names for animation (excluding the actual prediction)
     other_diseases = [name for name in class_names if name != predicted_class]
@@ -96,13 +95,14 @@ def show_animated_prediction(predicted_class, confidence, class_names):
     # Create placeholder for animated reveal
     placeholder = st.empty()
     
-    # Animate through random predictions
+    # Animate through random predictions with confidence in 75-90% range
     animation_steps = 8
     for step in range(animation_steps):
         random_disease = random.choice(other_diseases)
+        random_confidence = random.uniform(75, 90)
         with placeholder.container():
             st.success(f"**Prediction:** {random_disease}")
-            st.info(f"**Confidence:** {random.randint(20, 95):.2f}%")
+            st.info(f"**Confidence:** {random_confidence:.2f}%")
         time.sleep(0.3)
     
     # Reveal the actual prediction
